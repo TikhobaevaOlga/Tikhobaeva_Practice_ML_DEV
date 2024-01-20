@@ -1,46 +1,39 @@
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+from fastapi import Depends, FastAPI
+import aioredis
 
-from api.v1.routes import routers as v1_routers
-from core.config import configs
-from core.container import Container
-from util.class_object import singleton
+from src.Asyncrq import asyncrq
+from src.models import User
 
+from src.database import create_db_and_tables
+from src.auth.base_config import auth_backend, current_active_user, fastapi_users
+from src.auth.schemas import UserRead, UserCreate
+from src.prediction.router import router as prediction_router
 
-@singleton
-class AppCreator:
-    def __init__(self):
-        # set app default
-        self.app = FastAPI(
-            title=configs.PROJECT_NAME,
-            openapi_url=f"{configs.API}/openapi.json",
-            version="0.0.1",
-        )
+app = FastAPI(
+    title="Malware Classification App"
+)
 
-        # set db and container
-        self.container = Container()
-        self.db = self.container.db()
-        self.db.create_database()
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth/jwt",
+    tags=["auth"],
+)
 
-        # set cors
-        if configs.BACKEND_CORS_ORIGINS:
-            self.app.add_middleware(
-                CORSMiddleware,
-                allow_origins=[str(origin) for origin in configs.BACKEND_CORS_ORIGINS],
-                allow_credentials=True,
-                allow_methods=["*"],
-                allow_headers=["*"],
-            )
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
 
-        # set routes
-        @self.app.get("/")
-        def root():
-            return "service is working"
+app.include_router(prediction_router)
 
-        self.app.include_router(v1_routers, prefix=configs.API_V1_STR)
+@app.get("/authenticated-route")
+async def authenticated_route(user: User = Depends(current_active_user)):
+    return {"message": f"Hello {user.username}!"}
 
-
-app_creator = AppCreator()
-app = app_creator.app
-db = app_creator.db
-container = app_creator.container
+@app.on_event("startup")
+async def startup_event():
+    global redis
+    redis = await aioredis.from_url(url="redis://localhost")
+    await asyncrq.create_pool()
+    await create_db_and_tables()
