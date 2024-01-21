@@ -4,8 +4,8 @@ aioredis
 arq
 fastapi[all]
 fastapi-users[sqlalchemy]
-#fastapi-limiter
 python-dotenv
 pandas
 sqlalchemy
 scikit-learn==1.2.2
+streamlit

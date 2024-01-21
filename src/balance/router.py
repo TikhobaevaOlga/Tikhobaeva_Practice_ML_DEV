@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile
-import pandas as pd
+from fastapi import APIRouter, Depends
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,16 +10,6 @@ router = APIRouter(
     prefix="/balance",
     tags=["Balance"]
 )
-
-@router.get("/")
-async def check_balance(
-    user: User = Depends(current_active_user),
-    session: AsyncSession = Depends(get_async_session)
-):
-    query = select(User.balance).where(User.id == user.id)
-    query_result = await session.execute(query)
-    current_user_balance = query_result.mappings().all()[0]['balance']
-    return {'message': f'Your current balance is {current_user_balance}'}
 
 @router.post("/")
 async def replenish_balance(
