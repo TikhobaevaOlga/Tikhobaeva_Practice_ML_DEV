@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, UploadFile, status
+from io import BytesIO
 import pandas as pd
-from sqlalchemy import insert, select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.Asyncrq import Asyncrq, asyncrq
+from src.Asyncrq import asyncrq
 
 from src.auth.base_config import current_active_user
 from src.database import get_async_session
-from src.models import Model, Transaction, User
+from src.models import Model, User
 from arq.jobs import Job
 
 router = APIRouter(prefix="/prediction", tags=["Prediction"])
@@ -28,42 +29,30 @@ async def predict(
     data = pd.read_csv(file.file)
     file.file.close()
 
-    # Отправляем задачу в Redis для того, чтобы worker мог ее исполнить. Возвращаем task_id, он уникальный, по нему можно попросить результат
-    # Нужно будет реализовать endpoint /{task_id}
-    # В этом endpoint примерно следующий код:
-    # j = Job('1234567890 уникальный id', Asyncrq.pool) Создаем экземпляр класса Job с указанием ID и базы
-    # await j.status() Можно получить статус (в работе, выполнена, ошибка и тд)
-    # await j.result(timeout=3600) Вот тут мы будем дожидаться выполнения максимум 3600 сек, потом кинем ошибку
-    # Можно проверять статус и, если задача готова, возвращать результат
-
     job = await asyncrq.pool.enqueue_job(
         function="predict_on_csv",
-        user_id=user.id,
+        user=user,
         model_id=model_id,
         model_name=model_name,
+        model_price=model_price,
         input_data=data,
     )
-
-    stmt_new_balance = (
-        update(User.__table__)
-        .where(User.__table__.c.id == user.id)
-        .values(balance=user.balance - model_price)
-    )
-    await session.execute(stmt_new_balance)
-    await session.commit()
-
-    new_transaction = {
-        "amount": model_price,
-        "model_id": model_id,
-        "user_id": user.id,
-        "type": "withdraw",
-    }
-    stmt_add_trans = insert(Transaction).values(**new_transaction)
-    await session.execute(stmt_add_trans)
-    await session.commit()
 
     return {
         "status": "task_queued",
         "task_id": job.job_id,
         "message": "Your task has been successfully queued. You can use the task_id to check the status and retrieve the result later.",
     }
+
+@router.get("/{job_id}")
+async def get_prediction_result(
+    job_id: str,
+    user: User = Depends(current_active_user),
+):
+    job = Job(job_id, asyncrq.pool)
+    if await job.status() != 'complete':
+        status = await job.status()
+        return {"status": str(status)}
+    else:
+        result = await job.result(timeout=20)
+        return {"result": str(result)}

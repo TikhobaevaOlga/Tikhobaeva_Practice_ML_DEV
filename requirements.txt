@@ -10,3 +10,4 @@ sqlalchemy
 bcrypt==4.0.1
 scikit-learn==1.2.2
 streamlit
+streamlit-cookies-manager

@@ -26,7 +26,6 @@ class Prediction(Base):
     predicted_labels: Mapped[str] = Column(String)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
     model_id: Mapped[int] = mapped_column(Integer, ForeignKey('model.id'), nullable=False)
-    transaction_id: Mapped[int] = mapped_column(Integer, ForeignKey('transaction.id'), nullable=False)
     created_at = mapped_column(TIMESTAMP, default=datetime.utcnow)
 
 class Transaction(Base):
@@ -34,6 +33,7 @@ class Transaction(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     commited_at = mapped_column(TIMESTAMP, default=datetime.utcnow)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
-    model_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('model.id'), nullable=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
     type: Mapped[str] = mapped_column(String)
+    model_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('model.id'), nullable=True)
+    prediction_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('prediction.id'), nullable=True)

@@ -9,7 +9,7 @@ from src.database import create_db_and_tables
 from src.auth.base_config import auth_backend, current_active_user, fastapi_users
 from src.auth.schemas import UserRead, UserCreate
 from src.prediction.router import router as prediction_router
-from src.balance.router import router as balance_router
+from src.history.router import router as history_router
 
 app = FastAPI(title="Malware Classification App")
 
@@ -26,7 +26,7 @@ app.include_router(
 )
 
 app.include_router(prediction_router)
-app.include_router(balance_router)
+app.include_router(history_router)
 
 
 @app.get("/current_user")

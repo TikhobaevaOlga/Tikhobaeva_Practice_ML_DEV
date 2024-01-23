@@ -15,7 +15,7 @@ st.title("Malware Classification App")
 st.header("Login")
 
 st.write(
-    "Please login to have an access to a all functions. If you don't have an account go to register page and create one."
+    "Please login to have an access to a all functions. If you don't have an account, go to register page and create one."
 )
 
 email = st.text_input("Email")
@@ -28,10 +28,8 @@ inputs = {
 
 if st.button("Submit"):
     res = requests.post(url="http://localhost:8000/auth/login", data=inputs)
-    st.subheader(f"Response from API * = { res.status_code }")
     if res.status_code == 204:
         st.success("Login successful")
-        # Сохраняем куки в st.session_state
         cookies["find_malwares"] = res.cookies.get("find_malwares")
         cookies.save()
     else:
