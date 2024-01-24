@@ -1,46 +1,70 @@
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+from fastapi import Depends, FastAPI
+from redis import asyncio as aioredis
+from fastapi.middleware.cors import CORSMiddleware
 
-from api.v1.routes import routers as v1_routers
-from core.config import configs
-from core.container import Container
-from util.class_object import singleton
+from src.Asyncrq import asyncrq
+from src.models import User
 
+from src.database import create_db_and_tables
+from src.auth.base_config import (
+    auth_backend, current_active_user, fastapi_users
+)
+from src.auth.schemas import UserRead, UserCreate
+from src.prediction.router import router as prediction_router
+from src.history.router import router as history_router
 
-@singleton
-class AppCreator:
-    def __init__(self):
-        # set app default
-        self.app = FastAPI(
-            title=configs.PROJECT_NAME,
-            openapi_url=f"{configs.API}/openapi.json",
-            version="0.0.1",
-        )
+app = FastAPI(title="Malware Classification App")
 
-        # set db and container
-        self.container = Container()
-        self.db = self.container.db()
-        self.db.create_database()
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth",
+    tags=["auth"],
+)
 
-        # set cors
-        if configs.BACKEND_CORS_ORIGINS:
-            self.app.add_middleware(
-                CORSMiddleware,
-                allow_origins=[str(origin) for origin in configs.BACKEND_CORS_ORIGINS],
-                allow_credentials=True,
-                allow_methods=["*"],
-                allow_headers=["*"],
-            )
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
 
-        # set routes
-        @self.app.get("/")
-        def root():
-            return "service is working"
-
-        self.app.include_router(v1_routers, prefix=configs.API_V1_STR)
+app.include_router(prediction_router)
+app.include_router(history_router)
 
 
-app_creator = AppCreator()
-app = app_creator.app
-db = app_creator.db
-container = app_creator.container
+@app.get("/current_user")
+async def show_current_user(user: User = Depends(current_active_user)):
+    return {
+        "username": user.username,
+        "email": user.email,
+        "balance": user.balance
+    }
+
+
+origins = [
+    "http://localhost:8501",
+    "http://127.0.0.1:8501",
+    "https://localhost:8501",
+    "https://127.0.0.1:8501",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"],
+    allow_headers=[
+        "Content-Type",
+        "Set-Cookie",
+        "Access-Control-Allow-Headers",
+        "Access-Control-Allow-Origin",
+        "Authorization",
+    ],
+)
+
+
+@app.on_event("startup")
+async def startup_event():
+    global redis
+    redis = await aioredis.from_url(url="redis://127.0.0.1:6379")
+    await asyncrq.create_pool()
+    await create_db_and_tables()
