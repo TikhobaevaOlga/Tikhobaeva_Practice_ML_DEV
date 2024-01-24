@@ -33,7 +33,7 @@ input_data = st.file_uploader("Choose a CSV file with input data", type="csv")
 
 if st.button("Predict"):
     if chosen_model == "":
-        st.write("Имя модели не может быть пустым")
+        st.write("Name of the model cannot be missing")
     else:
         res_task = requests.post(
             url="http://localhost:8000/prediction/",
@@ -52,7 +52,7 @@ if st.button("Predict"):
 st.subheader("You can see the result on history page or after the click on the button")
 if st.button("Knew result"):
     if "saved_value" not in st.session_state.data:
-        st.error("Вы еще ничего не запрашивали")
+        st.error("You haven't asked for prediction yet ")
     else:
         res_result = requests.get(
             url=f"http://localhost:8000/prediction/{st.session_state.data['saved_value']}",

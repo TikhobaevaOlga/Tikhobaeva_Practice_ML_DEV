@@ -6,7 +6,9 @@ from src.Asyncrq import asyncrq
 from src.models import User
 
 from src.database import create_db_and_tables
-from src.auth.base_config import auth_backend, current_active_user, fastapi_users
+from src.auth.base_config import (
+    auth_backend, current_active_user, fastapi_users
+)
 from src.auth.schemas import UserRead, UserCreate
 from src.prediction.router import router as prediction_router
 from src.history.router import router as history_router
@@ -31,7 +33,11 @@ app.include_router(history_router)
 
 @app.get("/current_user")
 async def show_current_user(user: User = Depends(current_active_user)):
-    return {"username": user.username, "email": user.email, "balance": user.balance}
+    return {
+        "username": user.username,
+        "email": user.email,
+        "balance": user.balance
+    }
 
 
 origins = [

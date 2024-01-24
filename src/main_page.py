@@ -15,7 +15,8 @@ st.title("Malware Classification App")
 st.header("Login")
 
 st.write(
-    "Please login to have an access to a all functions. If you don't have an account, go to register page and create one."
+    "Please login to have an access to a all functions.",
+    "If you don't have an account, go to register page and create one."
 )
 
 email = st.text_input("Email")

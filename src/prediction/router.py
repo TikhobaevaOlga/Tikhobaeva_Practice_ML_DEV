@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, UploadFile, status
-from io import BytesIO
 import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,13 +43,14 @@ async def predict(
         "message": "Your task has been successfully queued. You can use the task_id to check the status and retrieve the result later.",
     }
 
+
 @router.get("/{job_id}")
 async def get_prediction_result(
     job_id: str,
     user: User = Depends(current_active_user),
 ):
     job = Job(job_id, asyncrq.pool)
-    if await job.status() != 'complete':
+    if await job.status() != "complete":
         status = await job.status()
         return {"status": str(status)}
     else:

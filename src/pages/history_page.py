@@ -22,7 +22,7 @@ res = requests.get(
 if res.status_code == 200:
     st.dataframe(res.json())
 else:
-    st.error('You are unauthorized')
+    st.error("You are unauthorized")
 
 st.header("Transaction history")
 
@@ -33,4 +33,4 @@ res = requests.get(
 if res.status_code == 200:
     st.dataframe(res.json())
 else:
-    st.error('You are unauthorized')
+    st.error("You are unauthorized")

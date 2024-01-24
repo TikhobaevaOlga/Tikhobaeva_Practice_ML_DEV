@@ -9,7 +9,9 @@ Base = declarative_base()
 
 
 engine = create_async_engine(DATABASE_URL)
-async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session_maker = sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 async def create_db_and_tables():

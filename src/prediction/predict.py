@@ -1,10 +1,8 @@
 import os
 import pickle
 import pandas as pd
-from sqlalchemy import insert, update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import update
 from src.database import get_async_session
-from src.auth.base_config import current_active_user
 from src.models import Prediction, Transaction, User
 from typing import Dict, Any
 
@@ -51,7 +49,7 @@ async def predict_on_csv(
             user_id=user.id,
             type="withdraw",
             model_id=model_id,
-            prediction_id=new_prediction.id
+            prediction_id=new_prediction.id,
         )
         session.add(new_transaction)
         await session.commit()

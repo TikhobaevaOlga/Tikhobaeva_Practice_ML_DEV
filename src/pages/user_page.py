@@ -48,7 +48,6 @@ if st.button("Logout"):
         cookies={"find_malwares": cookies.get("find_malwares")},
     )
     if res.status_code == 204:
-        # cookies["find_malwares"] = ""
         cookies.clear()
         st.switch_page("main_page.py")
     else:

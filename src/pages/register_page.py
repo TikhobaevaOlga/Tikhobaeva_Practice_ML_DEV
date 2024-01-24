@@ -17,6 +17,8 @@ inputs = {
     "password": password,
 }
 
-if st.button('Submit'):
-    res = requests.post(url = "http://localhost:8000/auth/register", data=json.dumps(inputs))
+if st.button("Submit"):
+    res = requests.post(
+        url="http://localhost:8000/auth/register", data=json.dumps(inputs)
+    )
     st.subheader(f"Response from API * = {res.status_code}")
